@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="러닝레터">
+<title>러닝레터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-mid: #5DCAA5;
+    --green-pale: #9FE1CB;
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #f0f0ed;
+    --text: #1a1a18;
+    --text2: #666660;
+    --text3: #aaaaA4;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.15);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    width: 100%; height: 100%;
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #111;
+    overflow: hidden;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 430px;
+    height: 100dvh;
+    margin: 0 auto;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 상단바 */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 52px 20px 12px;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-title { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
+  .topbar-sub { font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 5px; }
+  .run-badge {
+    background: var(--green-light);
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* 탭바 */
+  .tabbar {
+    display: flex;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 0 8px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .tab svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 500; }
+
+  /* 페이지 */
+  .pages { flex: 1; overflow: hidden; position: relative; }
+  .page { display: none; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .page.active { display: block; }
+
+  /* 지도 영역 */
+  .map-wrap { position: relative; height: 240px; overflow: hidden; background: #dce8d6; flex-shrink: 0; }
+  .map-wrap svg { width: 100%; height: 100%; }
+  .route-path {
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: drawRoute 2.2s ease forwards 0.5s;
+  }
+  @keyframes drawRoute { to { stroke-dashoffset: 0; } }
+  .runner-glow { animation: glow 2s ease-in-out infinite; }
+  @keyframes glow { 0%,100%{opacity:0.15;r:14} 50%{opacity:0.3;r:18} }
+  .runner-core { animation: blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  .letter-pop { opacity: 0; animation: letterPop 0.5s ease forwards; }
+  @keyframes letterPop { 0%{opacity:0;transform:translateY(8px) scale(0.8)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+
+  .map-card {
+    position: absolute;
+    bottom: 14px; left: 14px; right: 14px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    border: 0.5px solid var(--border);
+  }
+  .map-card strong { font-size: 14px; font-weight: 600; color: var(--text); display: block; margin-bottom: 2px; }
+  .map-card p { font-size: 12px; color: var(--text2); }
+
+  /* 홈 내용 */
+  .home-body { padding: 16px; }
+  .section-label { font-size: 12px; color: var(--text3); margin-bottom: 10px; letter-spacing: 0.3px; }
+
+  .main-send-card {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    border: 0.5px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .main-send-card .icon-wrap {
+    width: 48px; height: 48px;
+    background: var(--green-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+  }
+  .main-send-card .icon-wrap svg { width: 22px; height: 22px; stroke: var(--green); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .main-send-card p { font-size: 13px; color: var(--text2); line-height: 1.8; margin-bottom: 16px; }
+  .main-btn {
+    display: inline-block;
+    padding: 11px 28px;
+    background: var(--green);
+    color: white;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: opacity 0.15s;
+    active-opacity: 0.8;
+  }
+  .main-btn:active { opacity: 0.75; transform: scale(0.97); }
+
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .stat-card .emoji { font-size: 18px; margin-bottom: 4px; }
+  .stat-card .val { font-size: 12px; font-weight: 600; color: var(--text); display: block; }
+  .stat-card .lbl { font-size: 10px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
+
+  /* 편지쓰기 */
+  .write-body { padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; }
+  .write-body h2 { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+
+  .to-card {
+    background: var(--green-light);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .to-card svg { width: 18px; height: 18px; stroke: var(--green); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .to-card span { font-size: 13px; color: var(--green); font-weight: 500; }
+
+  .field-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+  textarea {
+    width: 100%;
+    height: 150px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 14px;
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    resize: none;
+    outline: none;
+    line-height: 1.75;
+    -webkit-appearance: none;
+  }
+  textarea::placeholder { color: var(--text3); }
+  textarea:focus { border-color: var(--green); }
+
+  .stamp-grid { display: flex; gap: 10px; }
+  .stamp {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border2);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .stamp.on {
+    border: 2px solid var(--green);
+    background: var(--green-light);
+  }
+
+  .char-count { font-size: 11px; color: var(--text3); text-align: right; }
+
+  .send-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--green);
+    color: white;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.15s;
+  }
+  .send-btn:active { opacity: 0.8; transform: scale(0.99); }
+  .send-btn svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* 받은편지함 */
+  .inbox-body { padding: 16px; }
+  .inbox-count { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
+
+  .letter-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .letter-card:active { background: var(--bg2); }
+  .letter-card.unread { border-left: 3px solid var(--green); }
+  .letter-card.unread::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(29,158,117,0.04) 0%, transparent 60%);
+  }
+  .letter-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .letter-from-label { font-size: 11px; color: var(--text3); }
+  .new-tag {
+    font-size: 10px; font-weight: 600;
+    background: var(--green-light);
+    color: var(--green);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .letter-text { font-size: 13px; color: var(--text); line-height: 1.7; }
+  .letter-date-tag { font-size: 10px; color: var(--text3); }
+
+  /* 편지 열기 오버레이 */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .overlay.open { display: flex; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .letter-modal {
+    background: var(--bg);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%;
+    max-width: 430px;
+  }
+  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-from { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+  .modal-text { font-size: 15px; color: var(--text); line-height: 1.85; margin-bottom: 24px; }
+  .modal-close {
+    width: 100%;
+    padding: 13px;
+    background: var(--bg2);
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+  }
+
+  /* 전송 완료 토스트 */
+  .toast {
+    position: fixed;
+    bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    white-space: nowrap;
+    z-index: 200;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- 상단바 -->
+  <div class="topbar">
+    <span class="topbar-title">러닝레터</span>
+    <span class="run-badge">오늘 5.2km 🏃</span>
+  </div>
+
+  <!-- 탭바 -->
+  <div class="tabbar">
+    <div class="tab active" onclick="goTab('home',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      오늘 경로
+    </div>
+    <div class="tab" onclick="goTab('write',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      편지쓰기
+    </div>
+    <div class="tab" onclick="goTab('inbox',this)">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      받은편지함
+      <span id="inbox-dot" style="width:6px;height:6px;background:var(--green);border-radius:50%;position:absolute;top:8px;"></span>
+    </div>
+  </div>
+
+  <div class="pages">
+
+    <!-- 홈 탭 -->
+    <div id="home" class="page active">
+      <div class="map-wrap">
+        <svg viewBox="0 0 430 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <rect width="430" height="240" fill="#dce8d6"/>
+          <!-- 도로 -->
+          <rect x="0" y="106" width="430" height="16" fill="#c5d6bc" opacity="0.7"/>
+          <rect x="178" y="0" width="16" height="240" fill="#c5d6bc" opacity="0.7"/>
+          <!-- 건물들 -->
+          <rect x="60" y="52" width="70" height="48" rx="4" fill="#b5c9ac" opacity="0.55"/>
+          <rect x="240" y="130" width="80" height="55" rx="4" fill="#b5c9ac" opacity="0.55"/>
+          <rect x="320" y="45" width="55" height="55" rx="4" fill="#b5c9ac" opacity="0.45"/>
+          <rect x="30" y="140" width="50" height="40" rx="4" fill="#b5c9ac" opacity="0.45"/>
+          <!-- 경로 -->
+          <polyline class="route-path"
+            points="20,210 90,210 90,112 194,112 194,42 360,42 360,112 410,112"
+            fill="none" stroke="#1D9E75" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- 시작점 -->
+          <circle cx="20" cy="210" r="5" fill="#9FE1CB" opacity="0.7"/>
+          <!-- 러너 -->
+          <circle cx="410" cy="112" r="16" fill="#1D9E75" class="runner-glow"/>
+          <circle cx="410" cy="112" r="7" fill="#1D9E75" class="runner-core"/>
+          <circle cx="410" cy="112" r="4" fill="white"/>
+          <!-- 편지들 -->
+          <g class="letter-pop" style="animation-delay:1.6s">
+            <rect x="148" y="52" width="20" height="14" rx="2.5" fill="white" stroke="#1D9E75" stroke-width="1.2"/>
+            <polyline points="148,52 158,60 168,52" fill="none" stroke="#1D9E75" stroke-width="1"/>
+          </g>
+          <g class="letter-pop" style="animation-delay:2.2s">
+            <rect x="292" y="34" width="20" height="14" rx="2.5" fill="white" stroke="#5DCAA5" stroke-width="1.2"/>
+            <polyline points="292,34 302,42 312,34" fill="none" stroke="#5DCAA5" stroke-width="1"/>
+          </g>
+          <g class="letter-pop" style="animation-delay:2.8s">
+            <rect x="370" y="88" width="20" height="14" rx="2.5" fill="white" stroke="#9FE1CB" stroke-width="1.2"/>
+            <polyline points="370,88 380,96 390,88" fill="none" stroke="#9FE1CB" stroke-width="1"/>
+          </g>
+        </svg>
+        <div class="map-card">
+          <strong>오늘 이 길을 달린 사람들이 있어요</strong>
+          <p>누군지는 몰라도, 같은 길 위에 있었으니까</p>
+        </div>
+      </div>
+
+      <div class="home-body">
+        <div class="section-label">이 경로를 달린 누군가에게</div>
+        <div class="main-send-card">
+          <div class="icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <p>오늘 같은 길을 달린 사람이 있어요.<br>누군지는 알 수 없지만,<br>편지를 띄워볼 수 있어요.</p>
+          <button class="main-btn" onclick="goTab('write', document.querySelectorAll('.tab')[1])">편지 쓰러 가기</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="emoji">🌅</div><span class="val">오전 6-8시</span><div class="lbl">달린 사람들</div></div>
+          <div class="stat-card"><div class="emoji">🛣️</div><span class="val">한강변</span><div class="lbl">코스 공유</div></div>
+          <div class="stat-card"><div class="emoji">📬</div><span class="val">편지 3통</span><div class="lbl">도착해 있어요</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 편지쓰기 탭 -->
+    <div id="write" class="page">
+      <div class="write-body">
+        <h2>편지 쓰기</h2>
+        <div class="to-card">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>오늘 이 길을 달린 누군가에게</span>
+        </div>
+        <div>
+          <div class="field-label">편지 내용</div>
+          <textarea id="letter-input" placeholder="오늘 달리다가 뒤에서 발소리가 들렸어요. 덕분에 마지막 1km 포기 안 했습니다. 고마워요, 누군지 모르지만." oninput="updateCount()"></textarea>
+          <div class="char-count"><span id="char-count">0</span> / 200자</div>
+        </div>
+        <div>
+          <div class="field-label">스탬프</div>
+          <div class="stamp-grid">
+            <div class="stamp on" onclick="pickStamp(this)">🏃</div>
+            <div class="stamp" onclick="pickStamp(this)">💌</div>
+            <div class="stamp" onclick="pickStamp(this)">🌅</div>
+            <div class="stamp" onclick="pickStamp(this)">🍃</div>
+            <div class="stamp" onclick="pickStamp(this)">⚡</div>
+          </div>
+        </div>
+        <button class="send-btn" onclick="sendLetter()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          편지 띄우기
+        </button>
+      </div>
+    </div>
+
+    <!-- 받은편지함 탭 -->
+    <div id="inbox" class="page">
+      <div class="inbox-body">
+        <div class="inbox-count">받은 편지 4통</div>
+        <div class="letter-card unread" onclick="openLetter(0)">
+          <div class="letter-meta">
+            <span class="letter-from-label">오늘 같은 길을 달린 누군가</span>
+            <span class="new-tag">new</span>
+          </div>
+          <div class="letter-text">비 올 것 같았는데 달리러 나오셨네요. 저도 나올까 말까 하다가 나왔거든요. 잘 달리셨나요?</div>
+        </div>
+        <div class="letter-card unread" onclick="openLetter(1)">
+          <div class="letter-meta">
+            <span class="letter-from-label">오늘 같은 길을 달린 누군가</span>
+            <span class="new-tag">new</span>
+          </div>
+          <div class="letter-text">이 구간 매일 달리시는 것 같아요. 저도 그래서인지 왠지 반갑더라고요. 오늘도 수고하셨어요.</div>
+        </div>
+        <div class="letter-card" onclick="openLetter(2)">
+          <div class="letter-meta">
+            <span class="letter-from-label">어제 같은 길을 달린 누군가</span>
+            <span class="letter-date-tag">어제</span>
+          </div>
+          <div class="letter-text">처음 달렸는데 중간에 포기하고 싶었어요. 앞서 달리는 누군가 보여서 끝까지 갔어요.</div>
+        </div>
+        <div class="letter-card" onclick="openLetter(3)">
+          <div class="letter-meta">
+            <span class="letter-from-label">3일 전 같은 길을 달린 누군가</span>
+            <span class="letter-date-tag">3일 전</span>
+          </div>
+          <div class="letter-text">새벽에 달리는 사람이 이렇게 많은 줄 몰랐어요. 혼자인 줄 알았는데 혼자가 아니었네요.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 편지 오버레이 -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="letter-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-from" id="modal-from"></div>
+    <div class="modal-text" id="modal-text"></div>
+    <button class="modal-close" onclick="document.getElementById('overlay').classList.remove('open')">닫기</button>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast">편지를 띄웠어요 💌</div>
+
+<script>
+const letters = [
+  { from: "오늘 같은 길을 달린 누군가", text: "비 올 것 같았는데 달리러 나오셨네요. 저도 나올까 말까 하다가 나왔거든요. 잘 달리셨나요?" },
+  { from: "오늘 같은 길을 달린 누군가", text: "이 구간 매일 달리시는 것 같아요. 저도 그래서인지 왠지 반갑더라고요. 오늘도 수고하셨어요." },
+  { from: "어제 같은 길을 달린 누군가", text: "처음 달렸는데 중간에 포기하고 싶었어요. 앞서 달리는 누군가 보여서 끝까지 갔어요." },
+  { from: "3일 전 같은 길을 달린 누군가", text: "새벽에 달리는 사람이 이렇게 많은 줄 몰랐어요. 혼자인 줄 알았는데 혼자가 아니었네요." }
+];
+
+function goTab(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+function pickStamp(el) {
+  document.querySelectorAll('.stamp').forEach(s => s.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function updateCount() {
+  const len = document.getElementById('letter-input').value.length;
+  document.getElementById('char-count').textContent = len;
+}
+
+function sendLetter() {
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+  document.getElementById('letter-input').value = '';
+  document.getElementById('char-count').textContent = '0';
+  setTimeout(() => goTab('home', document.querySelectorAll('.tab')[0]), 800);
+}
+
+function openLetter(i) {
+  document.getElementById('modal-from').textContent = letters[i].from;
+  document.getElementById('modal-text').textContent = letters[i].text;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeOverlay(e) {
+  if (e.target === document.getElementById('overlay')) {
+    document.getElementById('overlay').classList.remove('open');
+  }
+}
+</script>
+</body>
+</html>
